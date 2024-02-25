@@ -3,10 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    flake-utils = {
-      url = "github:numtide/flake-utils";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    flake-utils.url = "github:numtide/flake-utils";
   };
 
   outputs = {
@@ -19,6 +16,7 @@
         pkgs = nixpkgs.legacyPackages.${system};
       in {
         packages.slides = pkgs.callPackage ./nix/default.nix {inherit pkgs system;};
+        packages.default = pkgs.callPackage ./nix/default.nix {inherit pkgs system;};
         formatter = pkgs.alejandra;
       }
     );

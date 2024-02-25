@@ -24,7 +24,7 @@
   };
 
   show = pkgs.writeShellScriptBin "show" ''
-    ${pkgs.firefox}/bin/firefox ${slides}/bin/slides
+    ${pkgs.firefox}/bin/firefox ${slides}/bin/slides/*.html
   '';
 in
   pkgs.symlinkJoin {
