@@ -7,14 +7,16 @@
     inherit system;
 
     name = "slides";
-    src = ../slides/nix-fundamentals.md;
+    src = ../slides;
 
     args = [
       "-c"
       ''
         set -x
         ${pkgs.coreutils}/bin/mkdir -p $out/bin/$name
-        ${pkgs.marp-cli}/bin/marp $src -o $out/bin/$name
+        ${pkgs.coreutils}/bin/cp -r $src/* $out/bin/$name
+        ${pkgs.marp-cli}/bin/marp $out/bin/$name
+        ${pkgs.coreutils}/bin/rm -f $out/bin/$name/*.md
       ''
     ];
 
