@@ -18,7 +18,7 @@
       system: let
         pkgs = nixpkgs.legacyPackages.${system};
       in {
-        packages.nix-fundamentals = pkgs.callPackage ./nix/default.nix {inherit pkgs system;};
+        packages.slides = pkgs.callPackage ./nix/default.nix {inherit pkgs system;};
         formatter = pkgs.alejandra;
       }
     );

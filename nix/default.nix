@@ -23,12 +23,12 @@
     builder = "${pkgs.bash}/bin/bash";
   };
 
-  show = pkgs.writeShellScriptBin "nix-fundamentals" ''
+  show = pkgs.writeShellScriptBin "show" ''
     ${pkgs.firefox}/bin/firefox ${slides}/bin/slides
   '';
 in
   pkgs.symlinkJoin {
-    name = "nix-fundamentals";
+    name = "slides";
     paths = [
       slides
       show
