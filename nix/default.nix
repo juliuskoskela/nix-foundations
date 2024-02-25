@@ -28,7 +28,7 @@
   '';
 in
   pkgs.symlinkJoin {
-    name = "slides";
+    name = "nix-foundations-slides";
     paths = [
       slides
       show
