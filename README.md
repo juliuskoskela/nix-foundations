@@ -26,3 +26,5 @@ Slides and additional materials for the Nix Fundamentals course.
 - <https://github.com/spacekookie/learning-nix>
 - <https://github.com/tweag/rfcs/blob/flakes/rfcs/0049-flakes.md>
 - <https://nixos.asia/en/nix-modules>
+- <https://nixos-and-flakes.thiscute.world>
+- <https://nixcloud.io/tour/?id=introduction/nix>

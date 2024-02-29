@@ -86,9 +86,10 @@ correct = complete + without interference
 
 * High learning curve of the Nix language
 * Insufficient documentation and learning materials
-* Nix code cab be hard to debug
+* Nix code can be hard to debug
 * Lack of developer tooling
 * Design is still evolving with major features that are still not part of mainline.
+* Disk usage of `nix/store`
 
 <!--
 
@@ -99,6 +100,10 @@ correct = complete + without interference
 - Debugging Complexity: Debugging Nix code can be particularly difficult due to its declarative nature and the abstraction of its operational mechanisms, often leading to a frustrating experience for developers.
 
 - Evolving Design: The Nix ecosystem is still under active development, with major features and improvements yet to be integrated into the mainline. This ongoing evolution, while promising for the future, can introduce uncertainties and compatibility issues for current users.
+
+- To ensure the ability to roll back the system at any time, Nix retains all historical environments by default, resulting in increased disk space usage.
+
+- While this additional space usage may not be a concern on desktop computers, it can become problematic on resource-constrained cloud servers.
 
 -->
 
@@ -122,10 +127,13 @@ Nix employs a **functional package management** approach, treating packages as f
 
 <!--
 
-- **Nix's Functional Approach**: Emphasizes predictability and reproducibility in package management.
-- **Packages as Functions**: Every package is considered a function of its inputs, like source code and dependencies.
-- **Pure Build Process**: Ensures that the same inputs always result in the same output, eliminating variability.
-- **Benefits**: This methodology guarantees that software builds are consistent across different environments and times.
+- Nix's Functional Approach: Emphasizes predictability and reproducibility in package management.
+
+- Packages as Functions: Every package is considered a function of its inputs, like source code and dependencies.
+
+- Pure Build Process: Ensures that the same inputs always result in the same output, eliminating variability.
+
+- Benefits: This methodology guarantees that software builds are consistent across different environments and times.
 
 -->
 
@@ -135,10 +143,13 @@ Nix's **immutable store** uniquely identifies packages by hashing their inputs, 
 
 <!--
 
-- **Immutable Package Store**: Nix places packages in a non-changeable store, ensuring stability and reliability.
-- **Hashing Mechanism**: Incorporates a hash of all inputs in the package's directory name, making every package version distinct.
-- **Conflict Elimination**: Changes in inputs lead to new hashes, preventing package conflicts and ensuring isolation.
-- **Atomic Operations**: Supports seamless upgrades and rollbacks by switching references to different package versions, enhancing system reliability.
+- Immutable Package Store: Nix places packages in a non-changeable store, ensuring stability and reliability.
+
+- Hashing Mechanism: Incorporates a hash of all inputs in the package's directory name, making every package version distinct.
+
+- Conflict Elimination: Changes in inputs lead to new hashes, preventing package conflicts and ensuring isolation.
+
+- Atomic Operations: Supports seamless upgrades and rollbacks by switching references to different package versions, enhancing system reliability.
 
 -->
 
@@ -148,9 +159,13 @@ Nix and NixOS use a **declarative system configuration** model, specifying the d
 
 <!--
 
-- **Declarative Model**: Focus on defining the "what" (end state) rather than the "how" (steps).
-- **System Consistency**: Ensures systems can be reproduced exactly, aiding in reliability across different environments.
-- **Ease of Portability**: Configurations can be easily moved and replicated on different machines.
+- Declarative model focuses on the "what" (end state) rather than the "how" (steps).
+
+- Configuration as code or OS as code.
+
+- Ensures systems can be reproduced exactly, aiding in reliability across different environments.
+
+- Configurations can be easily moved and replicated on different machines.
 
 -->
 
@@ -160,9 +175,11 @@ Nix ensures each package and its **dependencies operate in isolation**, solving 
 
 <!--
 
-- **Isolated Packages**: Each package is self-contained with its dependencies.
-- **Solves Dependency Hell**: Multiple library versions can safely coexist.
-- **Runtime Isolation**: Applications only access their specific dependencies, enhancing security and stability.
+- Isolated Packages: Each package is self-contained with its dependencies.
+
+- Solves Dependency Hell: Multiple library versions can safely coexist.
+
+- Runtime Isolation: Applications only access their specific dependencies, enhancing security and stability.
 
 -->
 
@@ -172,9 +189,11 @@ Nix features a **garbage collector** to efficiently remove unused packages, mana
 
 <!--
 
-- **Efficient Cleanup**: Automatically removes packages not referenced by any system or user configuration.
-- **Disk Space Management**: Helps in maintaining optimal disk usage.
-- **Supports System Health**: Ensures the system remains clean and efficient over time.
+- Efficient Cleanup: Automatically removes packages not referenced by any system or user configuration.
+
+- Disk Space Management: Helps in maintaining optimal disk usage.
+
+- Supports System Health: Ensures the system remains clean and efficient over time.
 
 -->
 
@@ -184,9 +203,11 @@ Nix supports atomic switching between different **profiles and environments**, e
 
 <!--
 
-- **Flexible Environments**: Allows easy switching between sets of packages or development environments.
-- **Atomic Operations**: Changes are made without affecting system stability.
-- **Encourages Experimentation**: Users can try new packages or versions safely.
+- Flexible Environments: Allows easy switching between sets of packages or development environments.
+
+- Atomic Operations: Changes are made without affecting system stability.
+
+- Encourages Experimentation: Users can try new packages or versions safely.
 
 -->
 
@@ -196,9 +217,11 @@ Nix promotes **source and binary transparency**, building from source for reprod
 
 <!--
 
-- **Reproducible Builds**: From source to ensure modifications are possible and builds are consistent.
-- **Binary Caches**: Speed up installation times without compromising on integrity.
-- **Hash-based Integrity**: Ensures binaries exactly match their source inputs, maintaining trust and reproducibility.
+- Reproducible Builds: From source to ensure modifications are possible and builds are consistent.
+
+- Binary Caches: Speed up installation times without compromising on integrity.
+
+- Hash-based Integrity: Ensures binaries exactly match their source inputs, maintaining trust and reproducibility.
 
 -->
 
@@ -245,11 +268,15 @@ _In order to understand Nix we need to understand derivations._
 
 <!--
 
-- **Starting with a Nix File**: The first step in creating a derivation is to write a Nix file, typically named `default.nix`. This file is where you define the specifics of your package build, specifying all necessary details such as source files, dependencies, and build commands.
-- **Using `derivation` or Higher-level Abstractions**: Within your Nix file, you can utilize the `derivation` function, a built-in mechanism for defining package builds in a low-level, granular way. For convenience and added features, you might opt for higher-level abstractions like `mkDerivation`, which simplify the process by abstracting common patterns and providing more intuitive interfaces for package definition.
-- **Building with `nix-build` or `nix build`**: Once your derivation is defined, you compile or build it into a package using `nix-build` (for traditional Nix setups) or `nix build` (when working within the context of Nix Flakes). These commands interpret your Nix file, execute the build process as defined, and produce the final package.
-- **Understanding the `result` Symlink**: After the build process completes, a symbolic link named `result` appears in your build root directory. This symlink points directly to the package's location in the `nix/store/`, prefixed with a hash that uniquely identifies the inputs and build process. This hashed path ensures that each build is uniquely addressable and cacheable, facilitating reproducibility and efficiency.
-- **The Role of the Nix Store**: The `nix/store/` serves as the immutable repository for all packages and their dependencies. By placing the build output in the `nix/store/` under a hash-derived path, Nix guarantees that the build results are immutable, reproducible, and isolated from changes in the environment or other packages.
+- Starting with a Nix File: The first step in creating a derivation is to write a Nix file, typically named `default.nix`. This file is where you define the specifics of your package build, specifying all necessary details such as source files, dependencies, and build commands.
+
+- Using `derivation` or Higher-level Abstractions: Within your Nix file, you can utilize the `derivation` function, a built-in mechanism for defining package builds in a low-level, granular way. For convenience and added features, you might opt for higher-level abstractions like `mkDerivation`, which simplify the process by abstracting common patterns and providing more intuitive interfaces for package definition.
+
+- Building with `nix-build` or `nix build`: Once your derivation is defined, you compile or build it into a package using `nix-build` (for traditional Nix setups) or `nix build` (when working within the context of Nix Flakes). These commands interpret your Nix file, execute the build process as defined, and produce the final package.
+
+- Understanding the `result` Symlink: After the build process completes, a symbolic link named `result` appears in your build root directory. This symlink points directly to the package's location in the `nix/store/`, prefixed with a hash that uniquely identifies the inputs and build process. This hashed path ensures that each build is uniquely addressable and cacheable, facilitating reproducibility and efficiency.
+
+- The Role of the Nix Store: The `nix/store/` serves as the immutable repository for all packages and their dependencies. By placing the build output in the `nix/store/` under a hash-derived path, Nix guarantees that the build results are immutable, reproducible, and isolated from changes in the environment or other packages.
 
 -->
 
@@ -276,6 +303,14 @@ derivation {
   builder = "${pkgs.bash}/bin/bash";
 }
 ```
+
+<!--
+
+- Conditional argument `pkgs`.
+- Uses built-in function `derivation`.
+- Explicit build process `builder(args)`
+
+-->
 
 ---
 
@@ -332,6 +367,7 @@ We usually use a higher level abstraction such as `mkDerivation`
 # default.nix
 
 {pkgs ? import <nixpkgs> {}}:
+
 pkgs.stdenv.mkDerivation {
   name = "foo";
   src = ./.;
@@ -341,6 +377,14 @@ pkgs.stdenv.mkDerivation {
   '';
 }
 ```
+
+<!--
+
+- `mkDerivation` is tied to stdenv i.e C, Makefiles etc.
+- Can recognize a Makefile automatically.
+- Standard tooling accessible in script without referring pkgs.
+
+-->
 
 ---
 
@@ -367,6 +411,12 @@ rustPlatform.buildRustPackage rec {
   ...
 }
 ```
+
+<!--
+
+- Convention of `name` argument is that name includes version (if applicable). User can provide `pname` and `version` which will be combined to `name`.
+
+-->
 
 ---
 
@@ -664,7 +714,18 @@ We can define recursive attribute sets with `rec`.
 rec {
   x = y - 100;
   y = 123;
-}.x.
+}
+```
+
+⚠️ This is usually considered a "code smell". It is better to define local variables with `let in` if the same variable is needed for several elements in the resulting set.
+
+```nix
+let
+  z = 123;
+in {
+    x = z - 100;
+    y = z;
+  }
 ```
 
 ---
@@ -672,7 +733,15 @@ rec {
 The ... inside the curly braces means that the function can accept an attribute set with any number of attributes.
 
 ```nix
+# foo.nix
+
 {pkgs, ...}: { /* */ }
+```
+
+```nix
+# bar.nix
+
+foo = callPackage ./foo.nix {inherit pkgs someArg;};
 ```
 
 ---
@@ -754,24 +823,43 @@ in pkgs.stdenv.mkDerivation rec {
 
 ---
 
-```nix
-# configuration.nix
+By default toplevel of NixOS configuration is represented by the `/etc/nixos/configuration.nix` file.
 
+```nix
 { config, pkgs, ... }:
 {
   imports = [
     ./hardware-configuration.nix
   ];
-
-  # ...
 }
 ```
 
----
+Which is actually a module (function)
 
 ```nix
-# hardware-configuration.nix
+{ config, pkgs, ... }:
+{
+  imports = [];
+  options = {};
+  config = {};
+}
+```
 
+<!--
+
+- Configuration.nix is a module.
+
+- Beginners often confuse the modules attribute imports = [./module.nix] here with the Nix builtins function import module.nix. The first expects a path to a file containing a NixOS module (having the same specific structure we're describing here), while the second loads whatever Nix expression is in that file (no expected structure).
+
+- "Module function" because it accepts arguments. NixOS wiki calls this "turning a module into a function".
+
+-->
+
+---
+
+The `/etc/nixos/harware-configuration.nix` file represents device specific configurations
+
+```nix
 {
   config,
   lib,
@@ -790,12 +878,12 @@ in pkgs.stdenv.mkDerivation rec {
     device = "/dev/disk/by-uuid/f456aad5-de10-4009-81b9-f155cf943fb2";
     fsType = "ext4";
   };
-
-  # ...
 }
 ```
 
 ---
+
+Adding packages is easy. You can search for packages at <https://search.nixos.org/packages>
 
 ```nix
 environment.systemPackages = with pkgs; [
@@ -805,6 +893,8 @@ environment.systemPackages = with pkgs; [
 ```
 
 ---
+
+We can define users in our config, for full isolation of user configurations we can use `home-manager`
 
 ```nix
 users.users.john = {
@@ -816,6 +906,8 @@ users.users.john = {
 
 ---
 
+Almost any aspect of netwroking can be configured with Nix
+
 ```nix
 networking = {
   hostName = "my-hostname";
@@ -824,6 +916,8 @@ networking = {
 ```
 
 ---
+
+Many services provide modules for easy configuration
 
 ```nix
 services.xserver = {
@@ -837,6 +931,8 @@ services.xserver = {
 ```
 
 ---
+
+We can use the systemd module to define our own custom services
 
 ```nix
 systemd.services.gps-recorder = {
@@ -871,11 +967,15 @@ systemd.services.gps-recorder = {
 
 ---
 
+NixOS allows us to choose and configure our Linux kernel
+
 ```nix
 boot.kernelPackages = pkgs.linuxPackages_latest;
 ```
 
 ---
+
+We have handy asbtractions for making deep customizations in our kernel
 
 ```nix
 boot.kernelPatches = [
@@ -900,23 +1000,15 @@ boot.kernelPatches = [
 
 ---
 
-**Modular Configuration and Imports**: Organizing Configurations
+### Home Manager
 
 ---
 
-**System Upgrades and Rollbacks**: Procedures and Features
+### Defining Containers and Virtual Machines
 
 ---
 
-**Advanced Features**: Flakes, Overlays, Security
-
----
-
-**Best Practices**: Maintenance and Organization Tips
-
----
-
-**Summary**: Recap and Discussion
+### System Configuration Summary
 
 ---
 
