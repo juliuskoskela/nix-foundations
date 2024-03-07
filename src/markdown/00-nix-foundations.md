@@ -645,7 +645,7 @@ We can evaluate Nix expressions using the `nix repl` command
 Welcome to Nix 2.18.1. Type :? for help.
 ```
 
-A most basic Nix expression could be...
+A basic Nix expression could be...
 
 ```bash
 nix-repl> 1 + 2
@@ -823,11 +823,66 @@ The ... inside the curly braces means that the function can accept an attribute 
 {pkgs, ...}: { /* */ }
 ```
 
+We can use `callPackage` to automatically inject dependencies into a Nix package expression from the Nixpkgs package set, simplifying package declaration by avoiding the need to manually specify each dependency.
+
 ```nix
 # bar.nix
 
 foo = callPackage ./foo.nix {inherit pkgs someArg;};
 ```
+
+<!--
+
+The `callPackage` function in Nix plays a crucial role in simplifying the package management process by automatically injecting dependencies into Nix expressions. This is particularly useful within the Nixpkgs repository, where it streamlines the definition and maintenance of package expressions by handling dependencies more efficiently.
+
+### Without `callPackage`
+
+Without `callPackage`, when you define a Nix package, you explicitly pass each dependency to the function defining the package. This can be verbose and cumbersome, especially for packages with many dependencies. Here's a simplified example of what defining a package might look like without using `callPackage`:
+
+```nix
+{ stdenv, fetchurl, libX11, libXt }:
+
+stdenv.mkDerivation {
+  name = "my-package";
+  src = fetchurl {
+    url = "http://example.com/my-package.tar.gz";
+    sha256 = "0xyz...";
+  };
+  buildInputs = [ libX11 libXt ];
+}
+```
+
+In this example, `stdenv`, `fetchurl`, `libX11`, and `libXt` are explicitly passed as arguments to the package expression. This approach requires you to manually manage the dependencies, specifying each one in the function's arguments list.
+
+### Using `callPackage`
+
+`callPackage` abstracts away the manual injection of dependencies. It takes a Nix expression (usually a function that defines how to build a package) and an attribute set of dependencies, and then automatically applies the function to the dependencies it requires. Dependencies are matched by name between the function parameters and the attribute set provided to `callPackage`. Here's how you might use `callPackage` for the same package:
+
+```nix
+# In default.nix or similar
+{ pkgs }:
+
+pkgs.callPackage ./my-package.nix { }
+```
+
+And `my-package.nix` would look similar to the first example, but you don't need to explicitly pass the dependencies when you use `callPackage`:
+
+```nix
+{ stdenv, fetchurl, libX11, libXt }:
+
+stdenv.mkDerivation {
+  name = "my-package";
+  src = fetchurl {
+    url = "http://example.com/my-package.tar.gz";
+    sha256 = "0xyz...";
+  };
+  buildInputs = [ libX11 libXt ];
+}
+```
+
+In this scenario, `callPackage` takes care of passing `stdenv`, `fetchurl`, `libX11`, and `libXt` to the package expression based on the names of the arguments. This greatly simplifies package definitions, especially for complex packages with many dependencies, by automatically resolving and injecting these dependencies based on their names. It allows package maintainers to focus on the specifics of the package build process without worrying about the manual wiring of each dependency.
+
+-->
 
 ---
 
@@ -874,9 +929,9 @@ in pkgs.stdenv.mkDerivation rec {
 
 ### Introduction to System Configuration: Overview and Importance
 
-* Defining System Configuration in NixOS
-* Declarative vs. Imperative Configuration
-* Key Benefits of NixOS Configuration Approach
+- System configuration in NixOS is specified declaratively in configuration files. This encompasses everything from installed packages, user accounts, and services to system settings such as network configurations.
+* NixOS uses a declarative configuration approach
+* Nix promotes the idea of "configuration as code"
 
 <!---
 
@@ -1132,7 +1187,75 @@ Module structure
 
 ### Development Environment
 
-* Nix provides excellent tools for defining per-project development environment
+---
+
+#### Leveraging Nix for Project-Specific Environments
+
+- Nix excels in creating isolated, reproducible development environments tailored to individual projects.
+* Ensures consistency across development, testing, and production stages
+* Simplifies dependency management and minimizes "works on my machine" issues
+
+---
+
+#### Introduction to `nix-shell`
+
+- `nix-shell` is a powerful tool provided by Nix for instantiating development environments specified in a `shell.nix` file.
+* In flake-based setups we use `nix develop` instead of `nix-shell`
+* Allows developers to enter a shell with all dependencies and tools specified for a project
+* Facilitates easy sharing and replication of development environments
+
+---
+
+#### Advantages of Using Nix in Development
+
+- **Reproducibility**: Every member of a team can work with the exact same environment, regardless of their host system.
+* **Isolation**: Each project's dependencies are managed independently, reducing conflicts and ensuring clean workspaces.
+* **Flexibility**: Developers can quickly switch between projects with different dependencies without any hassle.
+
+---
+
+#### Creating a Development Environment with `devShell`
+
+- The `devShell` attribute in `flake.nix` allows for the definition of a project-specific development environment in Nix Flakes projects.
+* Defines tools and dependencies required for the project
+* Integrates seamlessly with modern development workflows and tooling
+
+---
+
+#### Practical Example: Setting up a `devShell`
+
+```nix
+{
+  description = "A simple Python project";
+
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-21.05";
+    flake-utils.url = "github:numtide/flake-utils";
+  };
+
+  outputs = { self, nixpkgs, flake-utils, ... }:
+    flake-utils.lib.eachDefaultSystem (system:
+      let
+        pkgs = import nixpkgs {
+          inherit system;
+        };
+      in {
+        devShell = pkgs.mkShell {
+          buildInputs = [
+            pkgs.python3
+            (pkgs.python3Packages.withPackages (ps: with ps; [
+              requests
+            ]))
+          ];
+
+          shellHook = ''
+            echo "Welcome to your devShell for the Python project."
+          '';
+        };
+      }
+    );
+}
+```
 
 ---
 
