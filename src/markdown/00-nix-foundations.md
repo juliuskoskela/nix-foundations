@@ -1,4 +1,5 @@
 ---
+author: Julius Koskela
 marp: true
 paginate: true
 class: invert
@@ -9,6 +10,10 @@ class: invert
 ![bg left:33%](../images/lighthouse-painting.webp)
 
 Foundations lecture on the Nix ecosystem.
+</br>
+
+> **author**: Julius Koskela
+> **email**: <julius.koskela@unikie.com>
 
 <!--
 
@@ -17,11 +22,7 @@ Foundations lecture on the Nix ecosystem.
 3. Derivations
 4. The Nix Language
 5. System Configuration
-6. Modules
-7. Environment Management
-8. Flakes
-9. Ecosystem and Community
-10. Summary
+6. Flakes
 
 -->
 
@@ -35,13 +36,15 @@ Foundations lecture on the Nix ecosystem.
 
 * **Nix**: is a package manager that can be used both on Linux and MacOS (darwin).
 * **Nix**: is a domain specific functional programming language.
-* **Nix**: is a build system that produces **derivations**.
+* **Nix**: is a software packaging system that produces **derivations**.
 * **Nixpkgs**: is a package repository made of Nix **derivations**.
 * **NixOS**: is a Linux distribution which integrates deeply with the Nix ecosystem.
 
 ---
 
-correct = complete + without interference
+![bg left:33% w:500](../images/3-graphic-correct-no-interference.svg)
+
+### Correct = Complete + No Interference
 
 <!--
 
@@ -55,7 +58,7 @@ correct = complete + without interference
 
 ---
 
-## Advantages of Nix
+### Advantages of Nix
 
 * Reproducible builds
 * Per-project environments
@@ -85,10 +88,9 @@ correct = complete + without interference
 ### Disadvantages of Nix
 
 * High learning curve of the Nix language
-* Insufficient documentation and learning materials
+* Fragmented documentation and learning materials
 * Nix code can be hard to debug
 * Lack of developer tooling
-* Design is still evolving with major features that are still not part of mainline.
 * Disk usage of `nix/store`
 
 <!--
@@ -235,16 +237,17 @@ _In order to understand Nix we need to understand derivations._
 
 ### What is a derivation?
 
-* **Nix Derivation**: Specification for building packages from inputs.
-* **`.drv` File**: Contains build attributes like builder, inputs, and outputs.
-* **Reproducible Builds**: Derivations specify all dependencies and steps.
-* **Isolated Build Process**: Ensures deterministic results, unaffected by user environment.
-* **Cached Results**: Stored in Nix store with input-based hash for uniqueness.
-* **Immutable Outputs**: Input changes result in new Nix store paths.
+* **Nix Derivation**: Specification for building packages from inputs
+* **`.drv` File**: Contains build attributes like builder, inputs, and outputs
+* **Reproducible Builds**: Derivations specify all dependencies and steps
+* **Isolated Build Process**: Ensures deterministic results, unaffected by user environment
+* **Cached Results**: Stored in Nix store with input-based hash for uniqueness
+* **Immutable Outputs**: Input changes result in new Nix store paths
+* **Closure**: Refers to the full description of a derivation and it's dependencies
 
 <!--
 
-- A Nix derivation is essentially a blueprint for constructing a software package. It defines exactly how to turn source code or binary inputs into a runnable program or library.
+- A "derivation" in Nix is akin to a blueprint for building a package. It describes everything needed to build the package from source: the source code itself, the build instructions, and all dependencies. Derivations ensure that package builds are reproducible, specifying not just what to build but also how to build it.
 
 - The `.drv` file is where the derivation details are stored, including the builder (the program that does the build), the inputs (such as source code and dependencies), environment variables needed for the build, and where to place the output.
 
@@ -256,7 +259,76 @@ _In order to understand Nix we need to understand derivations._
 
 - The immutability of outputs in the Nix store is a cornerstone of Nix's design philosophy. Any change in a derivation's inputs necessitates a new build, leading to a new path in the Nix store. This model supports both the reproducibility of builds and the integrity of the system over time.
 
+- A "closure" in the context of Nix refers to the complete, self-contained set of dependencies required for a package to run. Unlike traditional package managers, Nix captures not just the immediate dependencies of a package, but the entire dependency graph. This ensures that a package can be reproduced exactly, anywhere, anytime, without missing or incompatible dependencies.
+
 -->
+
+---
+
+![bg left:50% w:500](../images/0-chart-derivation.svg)
+
+A **derivation** in Nix can be conceptualized as a function that takes a set of inputs (dependencies) and produces an output (the package or software artifact).
+</br>
+$D: I \rightarrow O$
+
+<!--
+
+A derivation can be represented as a function mapping from a set of inputs (dependencies) to an output (the built package). This is denoted as:
+
+- Formula: \(D: I \rightarrow O\)
+
+Here:
+- \(D\) stands for a derivation, a specific set of instructions and dependencies.
+- \(I\) represents the set of inputs or dependencies required for the derivation. These could include libraries, compilers, or other tools.
+- \(O\) is the output, the result of the derivation, typically a binary or a package ready for installation.
+
+Key Takeaway:
+
+Derivations are the core unit of work in Nix, describing precisely how software is to be built. By treating packages as the output of pure functions (derivations), Nix achieves a high degree of reproducibility and reliability in software deployment.
+
+-->
+
+---
+
+![bg left:50% w:500](../images/1-chart-derivation-closure.svg)
+
+A **closure** in Nix encapsulates a package along with its entire dependency tree. This can be represented as the union of the package derivation and all of its dependencies' derivations.
+</br>
+$C_P = D_P \cup D_{L_1} \cup D_{L_2} \cup \ldots \cup D_{L_n}$
+
+<!--
+
+Consider a package \(P\) with dependencies. The closure for \(P\), denoted as \(C_P\), can be defined as the union of the derivation for \(P\) itself and the derivations for all of its dependencies, direct and indirect.
+
+- Formula: $$C_P = D_P \cup D_{L_1} \cup D_{L_2} \cup \ldots \cup D_{L_n}$$
+
+In this formula:
+- \(C_P\) is the closure for package \(P\).
+- \(D_P\) represents the derivation for package \(P\).
+- \(D_{L_1}, D_{L_2}, \ldots, D_{L_n}\) represent the derivations for each of \(P\)'s dependencies.
+- The union symbol (\(\cup\)) signifies that \(C_P\) includes \(D_P\) and all \(D_{L_i}\) (the complete set of dependencies).
+
+Key Takeaway:
+
+The closure concept ensures that every package is accompanied by a precise, comprehensive set of dependencies, eliminating the "it works on my machine" problem. This is a cornerstone of Nix's reliability and reproducibility in software environments.
+
+-->
+
+---
+
+A command to show a derivation of a package
+
+```bash
+➜  ~ nix derivation show nixpkgs#hello | wc -l
+70
+```
+
+The recursive flag `-r` gives us the full closure
+
+```bash
+➜  ~ nix derivation show -r nixpkgs#hello | wc -l
+17996
+```
 
 ---
 
@@ -314,7 +386,7 @@ derivation {
 
 ---
 
-View the derivation file `.drv` using `nix show-derivation`
+The resulting derivation would look something like
 
 ```json
 {
@@ -454,9 +526,12 @@ buildGoModule rec {
 
 ### The Build Process
 
-1) Evaluate package definition, compute hashes, and create `.drv` file
-2) Evaluate derivation output
-3) Build package according to derivation
+![bg left:33% w:300](../images/2-chart-nix-build-flow.drawio.svg)
+
+1) Evaluate package definition, compute hashes, and create `.drv` file.
+2) Evaluate the expected output of the derivation based on the `.drv` file.
+3) Build package according to derivation.
+4) Optionally archive to Nix Archive `.nar` for distribution such as binary cache.
 
 <!--
 
@@ -570,7 +645,7 @@ We can evaluate Nix expressions using the `nix repl` command
 Welcome to Nix 2.18.1. Type :? for help.
 ```
 
-A most basic Nix expression could be...
+A basic Nix expression could be...
 
 ```bash
 nix-repl> 1 + 2
@@ -650,6 +725,16 @@ pkgs = import <nixpkgs> {};
 # Import Nixpkgs with an overlay
 pkgs = import <nixpkgs> { overlays = [ (self: super: { /* overlay definition */ }) ]; };
 ```
+
+<!--
+
+- The NIX_PATH environment variable serves as a search path for Nix expressions. Nix expressions are files that describe how to build packages, and they can include things like dependencies, build instructions, and configuration settings. These expressions are used by Nix to understand how to compile or install software.
+
+- NIX_PATH defines a list of locations on your filesystem where Nix looks for Nix expressions (.nix files). These locations can be directories or URLs to remote repositories. This mechanism allows users to refer to Nix expressions by name without needing to specify an absolute path.
+
+- Use in Nix Expressions: Within Nix expressions themselves, NIX_PATH can be referenced to dynamically include other Nix expressions based on the search paths. This allows for flexible composition of software environments.
+
+-->
 
 ---
 
@@ -738,11 +823,66 @@ The ... inside the curly braces means that the function can accept an attribute 
 {pkgs, ...}: { /* */ }
 ```
 
+We can use `callPackage` to automatically inject dependencies into a Nix package expression from the Nixpkgs package set, simplifying package declaration by avoiding the need to manually specify each dependency.
+
 ```nix
 # bar.nix
 
 foo = callPackage ./foo.nix {inherit pkgs someArg;};
 ```
+
+<!--
+
+The `callPackage` function in Nix plays a crucial role in simplifying the package management process by automatically injecting dependencies into Nix expressions. This is particularly useful within the Nixpkgs repository, where it streamlines the definition and maintenance of package expressions by handling dependencies more efficiently.
+
+### Without `callPackage`
+
+Without `callPackage`, when you define a Nix package, you explicitly pass each dependency to the function defining the package. This can be verbose and cumbersome, especially for packages with many dependencies. Here's a simplified example of what defining a package might look like without using `callPackage`:
+
+```nix
+{ stdenv, fetchurl, libX11, libXt }:
+
+stdenv.mkDerivation {
+  name = "my-package";
+  src = fetchurl {
+    url = "http://example.com/my-package.tar.gz";
+    sha256 = "0xyz...";
+  };
+  buildInputs = [ libX11 libXt ];
+}
+```
+
+In this example, `stdenv`, `fetchurl`, `libX11`, and `libXt` are explicitly passed as arguments to the package expression. This approach requires you to manually manage the dependencies, specifying each one in the function's arguments list.
+
+### Using `callPackage`
+
+`callPackage` abstracts away the manual injection of dependencies. It takes a Nix expression (usually a function that defines how to build a package) and an attribute set of dependencies, and then automatically applies the function to the dependencies it requires. Dependencies are matched by name between the function parameters and the attribute set provided to `callPackage`. Here's how you might use `callPackage` for the same package:
+
+```nix
+# In default.nix or similar
+{ pkgs }:
+
+pkgs.callPackage ./my-package.nix { }
+```
+
+And `my-package.nix` would look similar to the first example, but you don't need to explicitly pass the dependencies when you use `callPackage`:
+
+```nix
+{ stdenv, fetchurl, libX11, libXt }:
+
+stdenv.mkDerivation {
+  name = "my-package";
+  src = fetchurl {
+    url = "http://example.com/my-package.tar.gz";
+    sha256 = "0xyz...";
+  };
+  buildInputs = [ libX11 libXt ];
+}
+```
+
+In this scenario, `callPackage` takes care of passing `stdenv`, `fetchurl`, `libX11`, and `libXt` to the package expression based on the names of the arguments. This greatly simplifies package definitions, especially for complex packages with many dependencies, by automatically resolving and injecting these dependencies based on their names. It allows package maintainers to focus on the specifics of the package build process without worrying about the manual wiring of each dependency.
+
+-->
 
 ---
 
@@ -789,9 +929,9 @@ in pkgs.stdenv.mkDerivation rec {
 
 ### Introduction to System Configuration: Overview and Importance
 
-* Defining System Configuration in NixOS
-* Declarative vs. Imperative Configuration
-* Key Benefits of NixOS Configuration Approach
+- System configuration in NixOS is specified declaratively in configuration files. This encompasses everything from installed packages, user accounts, and services to system settings such as network configurations.
+* NixOS uses a declarative configuration approach
+* Nix promotes the idea of "configuration as code"
 
 <!---
 
@@ -824,6 +964,7 @@ in pkgs.stdenv.mkDerivation rec {
 ---
 
 By default toplevel of NixOS configuration is represented by the `/etc/nixos/configuration.nix` file.
+</br>
 
 ```nix
 { config, pkgs, ... }:
@@ -831,17 +972,8 @@ By default toplevel of NixOS configuration is represented by the `/etc/nixos/con
   imports = [
     ./hardware-configuration.nix
   ];
-}
-```
 
-Which is actually a module (function)
-
-```nix
-{ config, pkgs, ... }:
-{
-  imports = [];
-  options = {};
-  config = {};
+  ...
 }
 ```
 
@@ -894,7 +1026,7 @@ environment.systemPackages = with pkgs; [
 
 ---
 
-We can define users in our config, for full isolation of user configurations we can use `home-manager`
+We can define users in our config
 
 ```nix
 users.users.john = {
@@ -1002,77 +1134,132 @@ boot.kernelPatches = [
 
 ### Home Manager
 
+* Manages user environments via Nix package manager.
+* Works with NixOS and non-NixOS Linux distros.
+* Automates setup of applications, dotfiles, and scripts.
+* Simplifies version control of personal setups.
+* Quick start: Install Nix, configure, apply with Home Manager.
+
+<!--
+
+- Home Manager leverages Nix to provide a declarative approach to user environment management, ensuring your setup is reproducible across different systems.
+
+- It's designed to work seamlessly across both NixOS and other Linux distributions, making it a versatile tool for a wide range of users.
+
+- With Home Manager, automating the installation and configuration of your applications, managing your dotfiles, and keeping your custom scripts organized becomes much simpler.
+
+- It also makes it easier to version-control your environment setup, allowing you to track changes and share your configurations.
+
+- Getting started is straightforward: after installing Nix, you can write your configuration file, and apply it using Home Manager, instantly setting up or updating your environment according to your specifications.
+
+-->
+
 ---
 
 ### Defining Containers and Virtual Machines
 
----
-
-### System Configuration Summary
-
----
-
-## 6. Modules :gear:
+* The Nix ecosystem has integrated tools for containers
+  * `containers`
+  * `virtualization.oci-containers`
+* For virtual machines
+  * `microvm.nix`
 
 ---
 
-## 7. Environment Management
+### Modules
+
+* `configuration.nix` is a module.
+* Modules are a way to create configuration fragments with options.
 
 ---
 
-* Nix focuses on isolated environments for precise dependency management
-* Minimizes conflicts between projects or tasks
-* Enhances reproducibility and consistency across environments
+Module structure
 
-<!---
-
-Nix emphasizes creating isolated environments for projects or development tasks to ensure dependencies are precisely managed and conflicts are minimized.
-
---->
-
----
-
-<!---
-
-`nix-shell` allows users to enter a shell environment with specific packages and dependencies, without permanently installing them.
-
---->
+```nix
+{
+  imports = [];
+  options = {};
+  config = {};
+}
+```
 
 ---
 
-<!---
-
-`nix-env` provides the tools for managing packages in a user's environment, allowing for flexible management of software without affecting the global system state.
-
---->
+### Development Environment
 
 ---
 
-<!---
+#### Leveraging Nix for Project-Specific Environments
 
-Nix profiles enable users to manage multiple sets of packages and configurations, with the ability to switch between them and rollback to previous states.
-
---->
-
----
-
-<!---
-
-Overlays allow users to extend or override packages in the Nixpkgs repository, enabling customization of environments at a granular level.
-
---->
+- Nix excels in creating isolated, reproducible development environments tailored to individual projects.
+* Ensures consistency across development, testing, and production stages
+* Simplifies dependency management and minimizes "works on my machine" issues
 
 ---
 
-<!---
+#### Introduction to `nix-shell`
 
-Demonstrates how `nix-shell` can be used to specify and manage project-specific dependencies, ensuring consistent environments across different machines.
-
---->
+- `nix-shell` is a powerful tool provided by Nix for instantiating development environments specified in a `shell.nix` file.
+* In flake-based setups we use `nix develop` instead of `nix-shell`
+* Allows developers to enter a shell with all dependencies and tools specified for a project
+* Facilitates easy sharing and replication of development environments
 
 ---
 
-## 8. Flakes :snowflake:
+#### Advantages of Using Nix in Development
+
+- **Reproducibility**: Every member of a team can work with the exact same environment, regardless of their host system.
+* **Isolation**: Each project's dependencies are managed independently, reducing conflicts and ensuring clean workspaces.
+* **Flexibility**: Developers can quickly switch between projects with different dependencies without any hassle.
+
+---
+
+#### Creating a Development Environment with `devShell`
+
+- The `devShell` attribute in `flake.nix` allows for the definition of a project-specific development environment in Nix Flakes projects.
+* Defines tools and dependencies required for the project
+* Integrates seamlessly with modern development workflows and tooling
+
+---
+
+#### Practical Example: Setting up a `devShell`
+
+```nix
+{
+  description = "A simple Python project";
+
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-21.05";
+    flake-utils.url = "github:numtide/flake-utils";
+  };
+
+  outputs = { self, nixpkgs, flake-utils, ... }:
+    flake-utils.lib.eachDefaultSystem (system:
+      let
+        pkgs = import nixpkgs {
+          inherit system;
+        };
+      in {
+        devShell = pkgs.mkShell {
+          buildInputs = [
+            pkgs.python3
+            (pkgs.python3Packages.withPackages (ps: with ps; [
+              requests
+            ]))
+          ];
+
+          shellHook = ''
+            echo "Welcome to your devShell for the Python project."
+          '';
+        };
+      }
+    );
+}
+```
+
+---
+
+## 6. Flakes :snowflake:
 
 _The missing piece of the Nix ecosystem._
 
@@ -1163,6 +1350,47 @@ This minimal setup exemplifies a flake that essentially repackages an existing p
 
 ---
 
+Full flake output schema
+
+```nix
+{ self, ... }@inputs:
+{
+  checks."<system>"."<name>" = derivation;
+  packages."<system>"."<name>" = derivation;
+  packages."<system>".default = derivation;
+  apps."<system>"."<name>" = {
+    type = "app";
+    program = "<store-path>";
+  };
+  apps."<system>".default = { type = "app"; program = "..."; };
+  formatter."<system>" = derivation;
+  legacyPackages."<system>"."<name>" = derivation;
+  overlays."<name>" = final: prev: { };
+  overlays.default = final: prev: { };
+  nixosModules."<name>" = { config }: { options = {}; config = {}; };
+  nixosModules.default = { config }: { options = {}; config = {}; };
+  nixosConfigurations."<hostname>" = {};
+  devShells."<system>"."<name>" = derivation;
+  devShells."<system>".default = derivation;
+  hydraJobs."<attr>"."<system>" = derivation;
+  templates."<name>" = {
+    path = "<store-path>";
+    description = "template description goes here?";
+  };
+  templates.default = { path = "<store-path>"; description = ""; };
+}
+```
+
+<!--
+
+- Full definition of a flakes outputs.
+
+- Creates a widely agreed template in the ecosystem.
+
+-->
+
+---
+
 ### Building and Running Flakes
 
 ```bash
@@ -1198,76 +1426,6 @@ Normal Nix expressions on the other hand accept impurity by default and purity c
 nix-build --pure-eval
 nix-build
 ```
-
----
-
-## 9. Ecosystem and Community
-
----
-
-### Introduction to the Nix Ecosystem and Community
-
-<!---
-
-Begin with an overview of the Nix ecosystem, highlighting its core components: Nix, the package manager; NixOS, the operating system; Nixpkgs, the package repository; and Flakes, the latest approach to package and environment management. Emphasize the synergy between these components and the vital role the community plays in nurturing and advancing the ecosystem.
-
---->
-
----
-
-### Nixpkgs, Package Management, and Community Resources
-
-<!---
-
-Dive into Nixpkgs, explaining how it serves as the backbone for package management in the Nix ecosystem, and detail the process of contributing to this repository. Then, highlight the community resources available for support and learning, including forums, IRC channels, and GitHub discussions, pointing out how these platforms facilitate knowledge sharing and collaboration among users and contributors.
-
---->
-
----
-
-### Contributing to Nix and Real-World Applications
-
-<!---
-
-Outline the various ways individuals can contribute to the Nix ecosystem, from package maintenance and software development to writing documentation. Then, share success stories and real-world applications of Nix and NixOS to illustrate the impact and practical benefits of the ecosystem in various settings, from individual projects to organizational use.
-
---->
-
----
-
-### Future Developments and Getting Involved
-
-<!---
-
-Discuss the future developments expected in the Nix ecosystem, including any planned features or improvements, to give a glimpse into the direction of Nix's evolution. Conclude by encouraging audience members to get involved, offering guidance on how to start contributing and becoming active members of the community, fostering a welcoming environment for newcomers.
-
---->
-
----
-
-## 10. Summary :bulb:
-
----
-
-### Summary: Key Takeaways from Nix Foundations
-
-* **Comprehensive Introduction**: We started with an overview of Nix, exploring its unique approach to package management and system configuration, emphasizing reproducibility, reliability, and the declarative model.
-
-* **Core Concepts**: Delved into the foundational concepts of Nix, including derivations, the Nix language, and how these elements work together to ensure system configurations and package dependencies are precisely managed and isolated.
-
-* **Practical Applications**: Through examples, we've seen how Nix facilitates the creation of reproducible environments, manages dependencies, and allows for seamless rollback of system states, enhancing development and deployment workflows.
-
-* **Advanced Features**: Introduced advanced Nix features like Flakes, which provide even greater control over package management and project development, ensuring even more reproducible environments.
-
-* **Ecosystem and Community**: Highlighted the vibrant Nix ecosystem and the supportive community that plays a crucial role in its development. We explored the resources available for learning and collaboration, as well as how individuals can contribute to the growth of Nix.
-
-* **Real-World Impact**: Shared success stories and practical applications, demonstrating the versatility and effectiveness of Nix in various settings, from personal projects to large-scale organizational deployments.
-
-<!---
-
-This series has provided a comprehensive introduction to Nix, covering its philosophy, key features, and practical applications. Attendees should now have a solid understanding of how Nix can transform system configuration and package management through its unique, declarative approach. The exploration of advanced features like Flakes and the insights into the ecosystem and community have aimed to equip participants with the knowledge and resources needed to start their journey with Nix, whether for personal or professional use. The shared success stories and applications of Nix have underscored its value and impact, encouraging further exploration and adoption of this powerful toolset.
-
---->
 
 ---
 

@@ -28,3 +28,4 @@ Slides and additional materials for the Nix Fundamentals course.
 - <https://nixos.asia/en/nix-modules>
 - <https://nixos-and-flakes.thiscute.world>
 - <https://nixcloud.io/tour/?id=introduction/nix>
+- <https://zero-to-nix.com>

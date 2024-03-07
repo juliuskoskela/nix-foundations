@@ -14,8 +14,9 @@
     flake-utils.lib.eachDefaultSystem (
       system: let
         pkgs = nixpkgs.legacyPackages.${system};
-      in rec {
+      in {
         packages.nix-foundations = pkgs.callPackage ./nix/default.nix {inherit pkgs system;};
+        devShells.default = import ./nix/shell.nix {inherit pkgs system;};
         formatter = pkgs.alejandra;
       }
     );
